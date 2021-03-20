@@ -39,6 +39,14 @@ object Streams {
       case _ => Empty()
     }
 
+    def drop[A](stream: Stream[A])(n: Int): Stream[A] = (stream,n) match {
+      case (Cons(_, tail), n) if n>1 => drop(tail())(n - 1)
+      case (Cons(_, tail), n) if n==1 => tail()
+      case _ => Empty()
+    }
+
+    def constant[A](elem: A): Stream[A] = iterate(elem)(x=>x)
+
     def iterate[A](init: => A)(next: A => A): Stream[A] = cons(init, iterate(next(init))(next))
   }
 }
@@ -53,4 +61,16 @@ object StreamsMain extends App {
 
   val corec: Stream[Int] = Stream.cons(1, corec) // {1,1,1,..}
   println(Stream.toList(Stream.take(corec)(10))) // [1,1,..,1]
+
+  val s = Stream.take(Stream.iterate(0)( _ +1))(10)
+  println(Stream.toList(Stream.drop(s)(6)))
+  // = > Cons (6 , Cons (7 , Cons (8 , Cons (9 , Nil ()))))
+
+  println(Stream.toList(Stream.take(Stream.constant("x"))(5)))
+  // = > Cons (x, Cons (x, Cons (x, Cons (x, Cons (x, Nil ())))))
+
+
+  // = > Cons (0 , Cons (1 , Cons (1 , Cons (2 , Cons (3 , Cons (5 , Cons (8 , Cons (13 , Nil ()))))))))
+
+
 }
